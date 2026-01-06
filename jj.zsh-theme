@@ -19,11 +19,12 @@ _jj_theme_vcs_info() {
     change_count=$(jj log -r 'trunk()..@' --no-graph -T '"x\n"' 2>/dev/null | wc -l | tr -d ' ')
     trunk_bookmark=$(jj log -r 'trunk()' --no-graph -T 'bookmarks.join(" ")' 2>/dev/null)
     stat_line=$(jj diff --stat -r @ 2>/dev/null | tail -1)
+    files=$(echo "$stat_line" | grep -oE '^[0-9]+' | head -1)
     ins=$(echo "$stat_line" | grep -oE '[0-9]+ insertion' | grep -oE '[0-9]+')
     del=$(echo "$stat_line" | grep -oE '[0-9]+ deletion' | grep -oE '[0-9]+')
 
     local stat="" desc_part=""
-    [[ -n "$ins" || -n "$del" ]] && stat=" %F{green}+${ins:-0}%f %F{red}-${del:-0}%f"
+    [[ -n "$files" && "$files" -gt 0 ]] && stat=" %F{yellow}*${files}%f %F{green}+${ins:-0}%f %F{red}-${del:-0}%f"
     [[ -n "$desc" ]] && desc_part=" %F{8}${desc}%f"
 
     echo " %F{magenta}jj:${change_id}%f%F{yellow}(${change_count})%f %F{cyan}${trunk_bookmark}%f${desc_part}${stat}${git_user}"
@@ -36,11 +37,12 @@ _jj_theme_vcs_info() {
     branch=$(git branch --show-current 2>/dev/null)
     [[ -z "$branch" ]] && branch=$(git rev-parse --short HEAD 2>/dev/null)
     stat_line=$(git diff --stat HEAD 2>/dev/null | tail -1)
+    files=$(echo "$stat_line" | grep -oE '^[0-9]+' | head -1)
     ins=$(echo "$stat_line" | grep -oE '[0-9]+ insertion' | grep -oE '[0-9]+')
     del=$(echo "$stat_line" | grep -oE '[0-9]+ deletion' | grep -oE '[0-9]+')
 
     local stat=""
-    [[ -n "$ins" || -n "$del" ]] && stat=" %F{green}+${ins:-0}%f %F{red}-${del:-0}%f"
+    [[ -n "$files" && "$files" -gt 0 ]] && stat=" %F{yellow}*${files}%f %F{green}+${ins:-0}%f %F{red}-${del:-0}%f"
 
     echo " %F{cyan}git:${branch}%f${stat}${git_user}"
     return
