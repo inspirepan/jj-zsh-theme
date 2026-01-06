@@ -13,17 +13,20 @@ _jj_theme_vcs_info() {
 
   # Try jj first
   if jj root &>/dev/null; then
-    local change_id desc ins del stat_line
+    local change_id desc ins del stat_line change_count trunk_bookmark
     change_id=$(jj log -r @ --no-graph -T 'change_id.shortest(8)' 2>/dev/null)
     desc=$(jj log -r @ --no-graph -T 'description.first_line()' 2>/dev/null)
+    change_count=$(jj log -r 'trunk()..@' --no-graph -T '"x\n"' 2>/dev/null | wc -l | tr -d ' ')
+    trunk_bookmark=$(jj log -r 'trunk()' --no-graph -T 'bookmarks.join(" ")' 2>/dev/null)
     stat_line=$(jj diff --stat -r @ 2>/dev/null | tail -1)
     ins=$(echo "$stat_line" | grep -oE '[0-9]+ insertion' | grep -oE '[0-9]+')
     del=$(echo "$stat_line" | grep -oE '[0-9]+ deletion' | grep -oE '[0-9]+')
 
-    local stat=""
+    local stat="" desc_part=""
     [[ -n "$ins" || -n "$del" ]] && stat=" %F{green}+${ins:-0}%f %F{red}-${del:-0}%f"
+    [[ -n "$desc" ]] && desc_part=" %F{8}${desc}%f"
 
-    echo " %F{magenta}jj:${change_id}%f %F{8}${desc}%f${stat}${git_user}"
+    echo " %F{magenta}jj:${change_id}%f%F{yellow}(${change_count})%f %F{cyan}${trunk_bookmark}%f${desc_part}${stat}${git_user}"
     return
   fi
 
@@ -46,5 +49,6 @@ _jj_theme_vcs_info() {
 
 setopt PROMPT_SUBST
 
-PROMPT='%F{blue}%~%f$(_jj_theme_vcs_info)
+PROMPT='
+%F{blue}%~%f$(_jj_theme_vcs_info)
 %F{magenta}❯%f '
