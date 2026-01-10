@@ -53,4 +53,4 @@ setopt PROMPT_SUBST
 
 PROMPT='
 %F{blue}%~%f$(_jj_theme_vcs_info)
-%F{magenta}❯%f '
+%F{magenta}➜%f '
