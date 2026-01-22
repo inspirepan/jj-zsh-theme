@@ -17,7 +17,8 @@ _jj_theme_vcs_info() {
     change_id=$(jj log -r @ --no-graph -T 'change_id.shortest(8)' 2>/dev/null)
     desc=$(jj log -r @ --no-graph -T 'description.first_line()' 2>/dev/null)
     change_count=$(jj log -r 'trunk()..@' --no-graph -T '"x\n"' 2>/dev/null | wc -l | tr -d ' ')
-    trunk_bookmark=$(jj log -r 'trunk()' --no-graph -T 'bookmarks.join(" ")' 2>/dev/null)
+    local_bookmark=$(jj log -r '@' --no-graph -T 'bookmarks.join(" ")' 2>/dev/null)
+    [[ -z "$local_bookmark" ]] && local_bookmark=$(jj log -r '@-' --no-graph -T 'bookmarks.join(" ")' 2>/dev/null)
     stat_line=$(jj diff --stat -r @ 2>/dev/null | tail -1)
     files=$(echo "$stat_line" | grep -oE '^[0-9]+' | head -1)
     ins=$(echo "$stat_line" | grep -oE '[0-9]+ insertion' | grep -oE '[0-9]+')
@@ -25,9 +26,13 @@ _jj_theme_vcs_info() {
 
     local stat="" desc_part=""
     [[ -n "$files" && "$files" -gt 0 ]] && stat=" %F{yellow}*${files}%f %F{green}+${ins:-0}%f %F{red}-${del:-0}%f"
-    [[ -n "$desc" ]] && desc_part=" %F{8}${desc}%f"
+    if [[ -n "$desc" ]]; then
+      desc_part=" %F{8}${desc}%f"
+    else
+      desc_part=" %F{8}(no desc)%f"
+    fi
 
-    echo " %F{magenta}jj:${change_id}%f%F{yellow}(${change_count})%f %F{cyan}${trunk_bookmark}%f${desc_part}${stat}${git_user}"
+    echo " %F{magenta}jj:${change_id}%f%F{yellow}(${change_count})%f %F{cyan}${local_bookmark}%f${desc_part}${stat}${git_user}"
     return
   fi
 
